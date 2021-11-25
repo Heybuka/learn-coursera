@@ -1,0 +1,87 @@
+ccat2<- allaffydata.norm['TC0800008838.hg.1', ]
+ccat2
+#subset by selecting from a string
+ccat2NO <- select(ccat2,contains ("N.sst"))
+ccat2NO
+ccat2N <- t(ccat2NO)
+#subset by selecting from a string
+ccat2TU <- select(ccat2,contains ("T.sst"))
+ccat2T <- t(ccat2TU)
+
+
+fatN <- rownames(ccat2N)
+fatN
+fat2N <- gsub(pattern = "HuClariomD.R", replacement = "HuClariomD.Run",x=fatN, fixed=T)%>%
+  gsub(pattern= "Runun",replacement= "Run", fixed=T)
+fat2N
+faN <- sapply(fat2N, function(x){
+  grep(pattern = "N$",
+       x=(strsplit(x, ".",fixed = T)[[1]]),
+       value = T)
+})
+faN
+
+fa2N <- sapply(faN, function(x){
+  tail(strsplit(x, "_", fixed = T)[[1]], n=1)
+})
+fa2N
+#remove the N at the end
+fa3N <- gsub(pattern = "N$", replacement = "", x = fa2N)
+fa3N
+CcN <- data.frame(ccat2N, stringsAsFactors = F)
+CcN$id <- fa3N
+rownames(CcN) <- NULL
+CcN
+#rename column names
+colnames(CcN)[1]<- "Normal"
+print(CcN)
+#edit in excel
+write.csv(CcN,"C:/Users/Chukwuebuka/Desktop/Research/Affy/CcN.csv", row.names=FALSE)
+CcNo <- read.csv("C:/Users/Chukwuebuka/Desktop/Research/Affy/CcN.csv")
+CcNo
+#for Tumor
+fatT <- rownames(ccat2T)
+fatT
+fat2T <- gsub(pattern = "HuClariomD.R", replacement = "HuClariomD.Run",x=fatT, fixed=T)%>%
+  gsub(pattern= "Runun",replacement= "Run", fixed=T)
+fat2T
+
+cfaT <- sapply(fat2T, function(x){
+  grep(pattern = "T$",
+       x=(strsplit(x, ".",fixed = T)[[1]]),
+       value = T)
+})
+cfaT
+
+cfa2T <- sapply(cfaT, function(x){
+  tail(strsplit(x, "_", fixed = T)[[1]], n=1)
+})
+cfa2T
+#remove the N at the end
+cfa3T <- gsub(pattern = "T$", replacement = "", x = cfa2T)
+cfa3T
+CcT <- data.frame(ccat2T, stringsAsFactors = F)
+CcT$id <- cfa3T
+rownames(CcT) <- NULL
+CcT
+#rename column names
+colnames(CcT)[1]<- "Tumor"
+print(CcT)
+
+library(dplyr)
+#join the two tables
+
+TC0800008838.hg.1<- dplyr::inner_join(CcNo, CcT, by=("id"))
+TC0800008838.hg.1
+
+#change column location
+TC <- TC0800008838.hg.1%>% relocate(id, .before = Normal) 
+TC
+#Remove rows
+TCO <- subset(TC,id!="P0827" & id!= "P0835"& id!= "P0829"& id!= "P0834" &id!= "P0828")
+TCO
+rownames(TCO) <- NULL
+#wilcoxon test
+wilcox.test(TCO$Tumor, TCO$Normal,paired = TRUE,conf.level = 0.95)
+
+
